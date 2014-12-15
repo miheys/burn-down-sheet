@@ -22,13 +22,34 @@ function generateTemplate() {
   var spreadsheet = SpreadsheetApp.getActive();
   var scopeSheet = spreadsheet.getActiveSheet();
   scopeSheet.setName('Scope');
-  
-  // Prompt the user for a row number.
-  var selectedRow = Browser.inputBox('Generate step-by-step',
-      'Please enter the row number of the addresses to use' +
-      ' (for example, "2"):',
-      Browser.Buttons.OK_CANCEL);
+   
+  userInput();
+}
 
+function userInput() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet();
+  var app = UiApp.createApplication().setHeight('300').setWidth('400');
+  var panel = app.createVerticalPanel();
+  var startDateBox = app.createDateBox().setName("startDate");
+  var endDateBox = app.createDateBox().setName("endDate");
+  var button = app.createButton('submit');
+  var handler = app.createServerHandler('getDate');
+  
+  var startDateLabel = app.createLabel("Please enter Sprint start date: ");
+  var endDateLabel = app.createLabel("Please enter Sprint end date: ");
+  var delimiter = app.createLabel(" ")
+  
+  handler.addCallbackElement(panel);
+  button.addClickHandler(handler);
+  panel.add(startDateLabel).add(startDateBox).add(delimeter).add(endDateLabel).add(endDateBox).add(button);
+  app.add(panel);
+  sh.show(app);
+}
+
+function getDate(e){
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  sheet.getRange('A1').setValue(new Date(e.parameter.startDate));
+  sheet.getRange('A2').setValue(new Date(e.parameter.endDate));
 }
 
 /**
