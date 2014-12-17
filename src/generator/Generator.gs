@@ -1,3 +1,5 @@
+var daysCount = 0;
+
 /**
  * A special function that runs when the spreadsheet is open, used to add a
  * custom menu to the spreadsheet.
@@ -67,15 +69,8 @@ function getDate(e){
   sheet.getRange('A1').setValue(startDate);
   sheet.getRange('A2').setValue(endDate);
   
-  var limit = 100;
-  var datesColumn = 5;
-  var date = startDate;
-  sheet.getRange(2, datesColumn++).setValue(date);
-  while (date != endDate && limit > 0) {
-    date = getNextDay(date);
-    sheet.getRange(2, datesColumn++).setValue(date);
-    limit--;
-  }
+  drawWorkingDays(sheet, startDate, endDate, 2, 5);
+  
   
   var today = new Date(e.parameter.startDate);
   var nextDate = today.setDate(today.getDate() + 1);
@@ -84,7 +79,29 @@ function getDate(e){
   // day of week
   sheet.getRange('A4').setValue(getDayOfWeek(startDate));
   sheet.getRange('A5').setValue(getNextDay(startDate));
+  sheet.getRange('A6').setValue(getDaysCount(startDate, endDate));
   
+}
+
+function drawWorkingDays(sheet, startDate, endDate, startRow, startColumn) {
+  var limit = 100;
+  var date = startDate;
+  daysCount = getDaysCount(startDate, endDate);
+  var dayNumber = 0;
+  while (dayNumber < daysCount && limit > 0) {
+    var dayOfWeek = getDayOfWeek(date);
+    if (dayOfWeek < 6) {
+      sheet.getRange(startRow, startColumn++).setValue(date);
+    } else if (dayOfWeek == 7) {
+      // making border at end of week
+      sheet.getRange(1, startColumn - 1, 100).setBorder(false, false, false, true, false, false);
+    } else {
+      sheet.getRange(1, startColumn - 1, 100).setBorder(false, false, false, false, false, false);
+    }
+    date = getNextDay(date);
+    dayNumber++;
+    limit--;
+  }
 }
 
 /**
@@ -105,4 +122,16 @@ function getNextDay(date) {
   var d = new Date(date);
   d.setDate(d.getDate()+1);
   return d;
+}
+
+/**
+ * Returns days count for provided two dates.
+ */
+function getDaysCount(startDate, endDate) {
+  // set hours, minutes, seconds and milliseconds to 0 if necessary and get number of days
+  var startDay = startDate.setHours(0,0,0,0)/(24*3600000);
+  var endDay = endDate.setHours(0,0,0,0)/(24*3600000);
+  
+  // get the difference in days (integer value )
+  return parseInt(endDay - startDay) + 1;
 }
