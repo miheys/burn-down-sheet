@@ -69,7 +69,7 @@ function getDate(e){
   sheet.getRange('A1').setValue(startDate);
   sheet.getRange('A2').setValue(endDate);
   
-  drawWorkingDays(sheet, startDate, endDate, 2, 5);
+  drawHeader(sheet, startDate, endDate);
   
   
   var today = new Date(e.parameter.startDate);
@@ -77,10 +77,33 @@ function getDate(e){
   sheet.getRange('A3').setValue(nextDate);
   
   // day of week
-  sheet.getRange('A4').setValue(getDayOfWeek(startDate));
-  sheet.getRange('A5').setValue(getNextDay(startDate));
-  sheet.getRange('A6').setValue(getDaysCount(startDate, endDate));
+//  sheet.getRange('A4').setValue(getDayOfWeek(startDate));
+//  sheet.getRange('A5').setValue(getNextDay(startDate));
+//  sheet.getRange('A6').setValue(getDaysCount(startDate, endDate));
   
+}
+
+function drawHeader(sheet, startDate, endDate) {
+  var currentColumn = 1;
+  setHeader(sheet, 1, currentColumn++, '#', 60);
+  setHeader(sheet, 1, currentColumn++, 'Summary', 200);
+  setHeader(sheet, 1, currentColumn++, 'Ext', 20);
+  setHeader(sheet, 1, currentColumn++, 'Pilot', 60);
+  setHeader(sheet, 1, currentColumn++, 'Copilot', 60);
+  setHeader(sheet, 1, currentColumn++, 'Verified', 60);
+  setHeader(sheet, 1, currentColumn++, 'Est.', 40);
+  setHeader(sheet, 1, currentColumn++, ' ', 20);
+  drawWorkingDays(sheet, startDate, endDate, 1, currentColumn);
+}
+
+function setHeader(sheet, row, column, value, width) {
+  sheet.setColumnWidth(column, width);
+  var range = sheet.getRange(row, column);
+  range.setValue(value);
+  range.setBackgroundRGB(100, 100, 100);
+  range.setFontWeight('bold');
+  var cell = range.getCell(1, 1);
+  cell.setHorizontalAlignment('center');
 }
 
 function drawWorkingDays(sheet, startDate, endDate, startRow, startColumn) {
