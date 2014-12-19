@@ -1,4 +1,7 @@
 var daysCount = 0;
+var sheet;
+var startDate;
+var endDate;
 
 /**
  * A special function that runs when the spreadsheet is open, used to add a
@@ -63,68 +66,70 @@ function userInput() {
 }
 
 function getDate(e){
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var startDate = new Date(e.parameter.startDate);
-  var endDate = new Date(e.parameter.endDate);
-  sheet.getRange('A1').setValue(startDate);
-  sheet.getRange('A2').setValue(endDate);
+  sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  startDate = new Date(e.parameter.startDate);
+  endDate = new Date(e.parameter.endDate);
   
-  drawHeader(sheet, startDate, endDate);
-  
+  drawHeader(startDate, endDate);
   
   var today = new Date(e.parameter.startDate);
   var nextDate = today.setDate(today.getDate() + 1);
-  sheet.getRange('A3').setValue(nextDate);
-  
-  // day of week
-//  sheet.getRange('A4').setValue(getDayOfWeek(startDate));
-//  sheet.getRange('A5').setValue(getNextDay(startDate));
-//  sheet.getRange('A6').setValue(getDaysCount(startDate, endDate));
-  
 }
 
-function drawHeader(sheet, startDate, endDate) {
+function drawHeader(startDate, endDate) {
   var currentColumn = 1;
-  setHeader(sheet, 1, currentColumn++, '#', 60);
-  setHeader(sheet, 1, currentColumn++, 'Summary', 200);
-  setHeader(sheet, 1, currentColumn++, 'Ext', 20);
-  setHeader(sheet, 1, currentColumn++, 'Pilot', 60);
-  setHeader(sheet, 1, currentColumn++, 'Copilot', 60);
-  setHeader(sheet, 1, currentColumn++, 'Verified', 60);
-  setHeader(sheet, 1, currentColumn++, 'Est.', 40);
-  setHeader(sheet, 1, currentColumn++, ' ', 20);
-  drawWorkingDays(sheet, startDate, endDate, 1, currentColumn);
+  setHeader(1, currentColumn++, '#', 60);
+  setHeader(1, currentColumn++, 'Summary', 600);
+  setHeader(1, currentColumn++, 'Ext', 20);
+  setHeader(1, currentColumn++, 'Pilot', 60);
+  setHeader(1, currentColumn++, 'Copilot', 60);
+  setHeader(1, currentColumn++, 'Verified', 60);
+  setHeader(1, currentColumn++, 'Est.', 40);
+  setHeader(1, currentColumn++, ' ', 20);
+  drawBorder(currentColumn - 1, false, true);
+  drawWorkingDays(1, currentColumn);
 }
 
-function setHeader(sheet, row, column, value, width) {
+function setHeader(row, column, value, width) {
   sheet.setColumnWidth(column, width);
   var range = sheet.getRange(row, column);
   range.setValue(value);
-  range.setBackgroundRGB(100, 100, 100);
+  range.setBackgroundRGB(200, 200, 200);
   range.setFontWeight('bold');
   var cell = range.getCell(1, 1);
   cell.setHorizontalAlignment('center');
 }
 
-function drawWorkingDays(sheet, startDate, endDate, startRow, startColumn) {
+function drawWorkingDays(startRow, startColumn) {
   var limit = 100;
   var date = startDate;
+  
   daysCount = getDaysCount(startDate, endDate);
   var dayNumber = 0;
   while (dayNumber < daysCount && limit > 0) {
     var dayOfWeek = getDayOfWeek(date);
+    
     if (dayOfWeek < 6) {
-      sheet.getRange(startRow, startColumn++).setValue(date);
-    } else if (dayOfWeek == 7) {
+      setHeader(startRow, startColumn, date, 40);
+      var range = sheet.getRange(startRow, startColumn);
+      range.setValue(Utilities.formatDate(date, "GMT+10", "''dd.MM"));
+      startColumn++;
+    }
+    if (dayOfWeek == 5) {
       // making border at end of week
-      sheet.getRange(1, startColumn - 1, 100).setBorder(false, false, false, true, false, false);
-    } else {
-      sheet.getRange(1, startColumn - 1, 100).setBorder(false, false, false, false, false, false);
+      drawBorder(startColumn - 1, false, true);
     }
     date = getNextDay(date);
     dayNumber++;
     limit--;
   }
+  drawBorder(startColumn, true, false);
+}
+
+function drawBorder(column, left, right) {
+  var range = sheet.getRange(1, column, 100);
+  range.getCell(1, 1).get
+  sheet.getRange(1, column, 100).setBorder(false, left, false, right, false, false);
 }
 
 /**
