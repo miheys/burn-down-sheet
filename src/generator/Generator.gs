@@ -1,3 +1,5 @@
+var MAX_ROWS = 100;
+
 var daysCount = 0;
 var sheet;
 var startDate;
@@ -10,13 +12,21 @@ var endDate;
 function onOpen() {
   var spreadsheet = SpreadsheetApp.getActive();
   var menuItems = [
-    {name: 'Generate Template', functionName: 'generateTemplate'}
-    ,
+    {name: 'Generate Template', functionName: 'generateTemplate'},
+    {name: 'Process stories', functionName: 'processStories'},
     {name: 'Generate Model', functionName: 'generateModel'},
     {name: 'Generate Chart', functionName: 'generateChart'}
   ];
   spreadsheet.addMenu('Scrum', menuItems);
   generateTemplate();
+}
+
+/**
+ * Iterates over input stories and subtasks. Row marked with 's' are considered to be a story.
+ * Creates total cells and completes 'Scope' sheet.
+ */
+function processStories() {
+  
 }
 
 /**
@@ -71,9 +81,6 @@ function getDate(e){
   endDate = new Date(e.parameter.endDate);
   
   drawHeader(startDate, endDate);
-  
-  var today = new Date(e.parameter.startDate);
-  var nextDate = today.setDate(today.getDate() + 1);
 }
 
 function drawHeader(startDate, endDate) {
@@ -86,6 +93,16 @@ function drawHeader(startDate, endDate) {
   setHeader(1, currentColumn++, 'Verified', 60);
   setHeader(1, currentColumn++, 'Est.', 40);
   setHeader(1, currentColumn++, ' ', 20);
+  sheet.setFrozenRows(1);
+  sheet.setFrozenColumns(4);
+  
+  // extending sheet to MAX_ROWS size
+  var lastRow = sheet.getLastRow();
+  while (lastRow < MAX_ROWS) {
+    sheet.appendRow(['0']);
+    lastRow = sheet.getLastRow();
+  }
+  
   drawBorder(currentColumn - 1, false, true);
   drawWorkingDays(1, currentColumn);
 }
@@ -101,8 +118,23 @@ function setHeader(row, column, value, width) {
 }
 
 function drawWorkingDays(startRow, startColumn) {
-  var limit = 100;
+  var limit = MAX_ROWS;
   var date = startDate;
+  
+  // TODO: remove
+  SpreadsheetApp.getUi().alert('Hello, world!');
+  
+  // Display a sidebar with custom HtmlService content.
+ var htmlOutput = HtmlService
+     .createHtmlOutput('<p>A change of speed, a change of style...</p>')
+     .setSandboxMode(HtmlService.SandboxMode.IFRAME)
+     .setTitle('My add-on');
+ SpreadsheetApp.getUi().showSidebar(htmlOutput);
+  
+  // Display a sidebar with custom UiApp content.
+ var uiInstance = UiApp.createApplication().setTitle('My add-on');
+ uiInstance.add(uiInstance.createLabel('The photograph on the dashboard taken years ago...'));
+ SpreadsheetApp.getUi().showSidebar(uiInstance);
   
   daysCount = getDaysCount(startDate, endDate);
   var dayNumber = 0;
@@ -127,9 +159,7 @@ function drawWorkingDays(startRow, startColumn) {
 }
 
 function drawBorder(column, left, right) {
-  var range = sheet.getRange(1, column, 100);
-  range.getCell(1, 1).get
-  sheet.getRange(1, column, 100).setBorder(false, left, false, right, false, false);
+  sheet.getRange(1, column, MAX_ROWS).setBorder(false, left, false, right, false, false);
 }
 
 /**
