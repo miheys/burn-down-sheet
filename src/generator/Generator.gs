@@ -1,16 +1,29 @@
+// constants
 var MAX_ROWS = 100;
+var STORY_MARKER = 's';
+var COLUMNS_INITIAL_COUNT = 8;
 
+// app objects
+var spreadsheet;
+var variablesSheet;
+var scopeSheet;
+
+// local variables
 var daysCount = 0;
-var sheet;
 var startDate;
 var endDate;
+var columnsCount;
+
+/***********************************************
+ * Menu items functions                        *
+ ***********************************************/
 
 /**
  * A special function that runs when the spreadsheet is open, used to add a
  * custom menu to the spreadsheet.
  */
 function onOpen() {
-  var spreadsheet = SpreadsheetApp.getActive();
+  spreadsheet = SpreadsheetApp.getActive();
   var menuItems = [
     {name: 'Generate Template', functionName: 'generateTemplate'},
     {name: 'Process stories', functionName: 'processStories'},
@@ -19,6 +32,32 @@ function onOpen() {
   ];
   spreadsheet.addMenu('Scrum', menuItems);
   generateTemplate();
+  processStories();
+}
+
+/***********************************************
+ * Functions for initializing local variables  *
+ ***********************************************/
+function createVariablesSheet() {
+  spreadsheet = SpreadsheetApp.getActive();
+  variablesSheet = spreadsheet.getSheetByName('Variables');
+  if (variablesSheet == null) {
+    variablesSheet = spreadsheet.insertSheet('Variables');
+  }
+  variablesSheet.hideSheet();
+}
+function initVariables() {
+  spreadsheet = SpreadsheetApp.getActive();
+  scopeSheet = spreadsheet.getSheetByName('Scope');
+  variablesSheet = spreadsheet.getSheetByName('Variables');
+  if (variablesSheet == null) {
+    SpreadsheetApp.getUi().alert('You should run Generate Template first');
+    return;
+  }
+  daysCount = variablesSheet.getRange('A1').getValue();
+  startDate = variablesSheet.getRange('A2').getValue();
+  endDate = variablesSheet.getRange('A3').getValue();
+  columnsCount = variablesSheet.getRange('A4').getValue();
 }
 
 /**
@@ -26,7 +65,26 @@ function onOpen() {
  * Creates total cells and completes 'Scope' sheet.
  */
 function processStories() {
+  var row = 2;
+  var storyRow = 2;
+  while (row < MAX_ROWS) {
+    processStoryItem(row);
+    row++;
+    
+    row = MAX_ROWS;
+  }
+}
+
+function processStoryItem(row) {
   
+  SpreadsheetApp.getUi().alert(row);
+  SpreadsheetApp.getUi().alert('Checking is item is a story');
+  var isStory = scopeSheet.getRange(row, 3).getValue() == STORY_MARKER;
+  if (isStory) {
+    SpreadsheetApp.getUi().alert('Is Story');
+    drawStoryHeader(row);
+  }
+  SpreadsheetApp.getUi().alert('Header completed');
 }
 
 /**
@@ -76,7 +134,7 @@ function userInput() {
 }
 
 function getDate(e){
-  sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  scopeSheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   startDate = new Date(e.parameter.startDate);
   endDate = new Date(e.parameter.endDate);
   
@@ -93,14 +151,14 @@ function drawHeader(startDate, endDate) {
   setHeader(1, currentColumn++, 'Verified', 60);
   setHeader(1, currentColumn++, 'Est.', 40);
   setHeader(1, currentColumn++, ' ', 20);
-  sheet.setFrozenRows(1);
-  sheet.setFrozenColumns(4);
+  scopeSheet.setFrozenRows(1);
+  scopeSheet.setFrozenColumns(4);
   
   // extending sheet to MAX_ROWS size
-  var lastRow = sheet.getLastRow();
+  var lastRow = scopeSheet.getLastRow();
   while (lastRow < MAX_ROWS) {
-    sheet.appendRow(['0']);
-    lastRow = sheet.getLastRow();
+    scopeSheet.appendRow(['0']);
+    lastRow = scopeSheet.getLastRow();
   }
   
   drawBorder(currentColumn - 1, false, true);
@@ -108,8 +166,8 @@ function drawHeader(startDate, endDate) {
 }
 
 function setHeader(row, column, value, width) {
-  sheet.setColumnWidth(column, width);
-  var range = sheet.getRange(row, column);
+  scopeSheet.setColumnWidth(column, width);
+  var range = scopeSheet.getRange(row, column);
   range.setValue(value);
   range.setBackgroundRGB(200, 200, 200);
   range.setFontWeight('bold');
@@ -117,33 +175,46 @@ function setHeader(row, column, value, width) {
   cell.setHorizontalAlignment('center');
 }
 
+function drawStoryHeader(row) {
+  
+  // TODO: remove
+//  SpreadsheetApp.getUi().alert(columnsCount);
+  SpreadsheetApp.getUi().alert('Drawing story header');
+  
+  var range = scopeSheet.getRange(row, 1, 1, columnsCount);
+  
+  SpreadsheetApp.getUi().alert('Range taken');
+  
+  range.setBackgroundRGB(220, 220, 220);
+  range.setFontWeight('bold');
+}
+
 function drawWorkingDays(startRow, startColumn) {
   var limit = MAX_ROWS;
   var date = startDate;
-  
-  // TODO: remove
-  SpreadsheetApp.getUi().alert('Hello, world!');
   
   // Display a sidebar with custom HtmlService content.
  var htmlOutput = HtmlService
      .createHtmlOutput('<p>A change of speed, a change of style...</p>')
      .setSandboxMode(HtmlService.SandboxMode.IFRAME)
-     .setTitle('My add-on');
+     .setTitle('TAF add-on');
  SpreadsheetApp.getUi().showSidebar(htmlOutput);
   
   // Display a sidebar with custom UiApp content.
- var uiInstance = UiApp.createApplication().setTitle('My add-on');
- uiInstance.add(uiInstance.createLabel('The photograph on the dashboard taken years ago...'));
+ var uiInstance = UiApp.createApplication().setTitle('TAF add-on');
+ uiInstance.add(uiInstance.createLabel('Please add your Stories with Subtasks in two columns. In third column mark story items with "s".'));
  SpreadsheetApp.getUi().showSidebar(uiInstance);
   
   daysCount = getDaysCount(startDate, endDate);
+  variables.getRange('A1').setValue(daysCount);
+  columnsCount = COLUMNS_INITIAL_COUNT + daysCount;
   var dayNumber = 0;
   while (dayNumber < daysCount && limit > 0) {
     var dayOfWeek = getDayOfWeek(date);
     
     if (dayOfWeek < 6) {
       setHeader(startRow, startColumn, date, 40);
-      var range = sheet.getRange(startRow, startColumn);
+      var range = scopeSheet.getRange(startRow, startColumn);
       range.setValue(Utilities.formatDate(date, "GMT+10", "''dd.MM"));
       startColumn++;
     }
@@ -159,7 +230,7 @@ function drawWorkingDays(startRow, startColumn) {
 }
 
 function drawBorder(column, left, right) {
-  sheet.getRange(1, column, MAX_ROWS).setBorder(false, left, false, right, false, false);
+  scopeSheet.getRange(1, column, MAX_ROWS).setBorder(false, left, false, right, false, false);
 }
 
 /**
