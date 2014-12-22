@@ -31,8 +31,11 @@ function onOpen() {
     {name: 'Generate Chart', functionName: 'generateChart'}
   ];
   spreadsheet.addMenu('Scrum', menuItems);
+  
+  createVariablesSheet();
+  
   generateTemplate();
-  processStories();
+  // processStories();
 }
 
 /***********************************************
@@ -40,11 +43,19 @@ function onOpen() {
  ***********************************************/
 function createVariablesSheet() {
   spreadsheet = SpreadsheetApp.getActive();
+  scopeSheet = spreadsheet.getSheetByName('Scope');
+  if (scopeSheet == null) {
+    scopeSheet = spreadsheet.getActiveSheet();
+    scopeSheet.setName('Scope');
+  }
   variablesSheet = spreadsheet.getSheetByName('Variables');
   if (variablesSheet == null) {
     variablesSheet = spreadsheet.insertSheet('Variables');
   }
-  variablesSheet.hideSheet();
+  
+//  variablesSheet.hideSheet();
+  // TODO: MVO: remove
+//  variablesSheet.showSheet();
 }
 function initVariables() {
   spreadsheet = SpreadsheetApp.getActive();
@@ -54,10 +65,47 @@ function initVariables() {
     SpreadsheetApp.getUi().alert('You should run Generate Template first');
     return;
   }
-  daysCount = variablesSheet.getRange('A1').getValue();
-  startDate = variablesSheet.getRange('A2').getValue();
-  endDate = variablesSheet.getRange('A3').getValue();
-  columnsCount = variablesSheet.getRange('A4').getValue();
+  daysCount = readDaysCount();
+  startDate = readStartDate();
+  endDate = readEndDate();
+  columnsCount = readColumnsCount();
+}
+function writeDaysCount(daysCount) {
+  variablesSheet().getRange(1, 1).setValue('daysCount');
+  variablesSheet().getRange(1, 2).setValue(daysCount);
+}
+function readDaysCount() {
+  return variablesSheet().getRange(1, 2).getValue();
+}
+function writeStartDate(startDate) {
+  variablesSheet().getRange(2, 1).setValue('startDate');
+  variablesSheet().getRange(2, 2).setValue(startDate);
+}
+function readStartDate() {
+  return variablesSheet().getRange(2, 2).getValue();
+}
+function writeEndDate(endDate) {
+  variablesSheet().getRange(3, 1).setValue('endDate');
+  variablesSheet().getRange(3, 2).setValue(endDate);
+}
+function readEndDateDate() {
+  return variablesSheet().getRange(3, 2).getValue();
+}
+function writeColumnsCount(columnsCount) {
+  variablesSheet().getRange(4, 1).setValue('columnsCount');
+  variablesSheet().getRange(4, 2).setValue(columnsCount);
+}
+function readColumnsCount() {
+  return variablesSheet().getRange(4, 2).getValue();
+}
+function variablesSheet() {
+  return spreadsheet().getSheetByName('Variables');
+}
+function scopeSheet() {
+  return spreadsheet().getSheetByName('Scope');
+}
+function spreadsheet() {
+  return SpreadsheetApp.getActive();
 }
 
 /**
@@ -91,9 +139,6 @@ function processStoryItem(row) {
  * Creates a new sheet 'Scope' containing sprint issues and work in progress.
  */
 function generateTemplate() {
-  var spreadsheet = SpreadsheetApp.getActive();
-  var scopeSheet = spreadsheet.getActiveSheet();
-  scopeSheet.setName('Scope');
    
   userInput();
 }
@@ -102,14 +147,14 @@ function generateTemplate() {
  * Creates a new sheet 'Model' containing sprint progress data for praphs.
  */
 function generateModel() {
-  var spreadsheet = SpreadsheetApp.getActive();
+  initVariables();
 }
 
 /**
  * Creates a new sheet 'Charts' containing burn down graphs.
  */
 function generateChart() {
-  var spreadsheet = SpreadsheetApp.getActive();
+  initVariables();
 }
 
 function userInput() {
@@ -119,7 +164,7 @@ function userInput() {
   var startDateBox = app.createDateBox().setName("startDate");
   var endDateBox = app.createDateBox().setName("endDate");
   var button = app.createButton('submit');
-  var handler = app.createServerHandler('getDate');
+  var handler = app.createServerHandler('drawTemplate');
   
   var startDateLabel = app.createLabel("Please enter Sprint start date: ");
   var endDateLabel = app.createLabel("Please enter Sprint end date: ");
@@ -133,10 +178,17 @@ function userInput() {
   app.close();
 }
 
-function getDate(e){
-  scopeSheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+function drawTemplate(e){
   startDate = new Date(e.parameter.startDate);
+  if (startDate == null) {
+    startDate = new Date("2014/12/03 14:25:58 +00");
+  }
+  writeStartDate(startDate);
+  if (endDate == null) {
+    endDate = new Date("2014/12/22 14:25:58 +00");
+  }
   endDate = new Date(e.parameter.endDate);
+  writeEndDate(endDate);
   
   drawHeader(startDate, endDate);
 }
@@ -151,23 +203,25 @@ function drawHeader(startDate, endDate) {
   setHeader(1, currentColumn++, 'Verified', 60);
   setHeader(1, currentColumn++, 'Est.', 40);
   setHeader(1, currentColumn++, ' ', 20);
-  scopeSheet.setFrozenRows(1);
-  scopeSheet.setFrozenColumns(4);
+  scopeSheet().setFrozenRows(1);
+  scopeSheet().setFrozenColumns(4);
   
   // extending sheet to MAX_ROWS size
-  var lastRow = scopeSheet.getLastRow();
+  var lastRow = scopeSheet().getLastRow();
   while (lastRow < MAX_ROWS) {
-    scopeSheet.appendRow(['0']);
-    lastRow = scopeSheet.getLastRow();
+    scopeSheet().appendRow(['0']);
+    lastRow = scopeSheet().getLastRow();
   }
+  
+  alert('Drawing border...');
   
   drawBorder(currentColumn - 1, false, true);
   drawWorkingDays(1, currentColumn);
 }
 
 function setHeader(row, column, value, width) {
-  scopeSheet.setColumnWidth(column, width);
-  var range = scopeSheet.getRange(row, column);
+  scopeSheet().setColumnWidth(column, width);
+  var range = scopeSheet().getRange(row, column);
   range.setValue(value);
   range.setBackgroundRGB(200, 200, 200);
   range.setFontWeight('bold');
@@ -193,6 +247,8 @@ function drawWorkingDays(startRow, startColumn) {
   var limit = MAX_ROWS;
   var date = startDate;
   
+  alert('Drawing working days...');
+  
   // Display a sidebar with custom HtmlService content.
  var htmlOutput = HtmlService
      .createHtmlOutput('<p>A change of speed, a change of style...</p>')
@@ -206,15 +262,17 @@ function drawWorkingDays(startRow, startColumn) {
  SpreadsheetApp.getUi().showSidebar(uiInstance);
   
   daysCount = getDaysCount(startDate, endDate);
-  variables.getRange('A1').setValue(daysCount);
+  writeDaysCount(daysCount);
+  
   columnsCount = COLUMNS_INITIAL_COUNT + daysCount;
+  writeColumnsCount(columnsCount);
   var dayNumber = 0;
   while (dayNumber < daysCount && limit > 0) {
     var dayOfWeek = getDayOfWeek(date);
     
     if (dayOfWeek < 6) {
       setHeader(startRow, startColumn, date, 40);
-      var range = scopeSheet.getRange(startRow, startColumn);
+      var range = scopeSheet().getRange(startRow, startColumn);
       range.setValue(Utilities.formatDate(date, "GMT+10", "''dd.MM"));
       startColumn++;
     }
@@ -230,7 +288,11 @@ function drawWorkingDays(startRow, startColumn) {
 }
 
 function drawBorder(column, left, right) {
-  scopeSheet.getRange(1, column, MAX_ROWS).setBorder(false, left, false, right, false, false);
+  scopeSheet().getRange(1, column, MAX_ROWS).setBorder(false, left, false, right, false, false);
+}
+
+function alert(message) {
+  SpreadsheetApp.getUi().alert(message);
 }
 
 /**
