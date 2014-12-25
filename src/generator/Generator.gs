@@ -10,6 +10,7 @@ var scopeSheet;
 
 // local variables
 var daysCount = 0;
+var workingDaysCount = 0;
 var startDate;
 var endDate;
 var columnsCount;
@@ -77,26 +78,33 @@ function writeDaysCount(daysCount) {
 function readDaysCount() {
   return variablesSheet().getRange(1, 2).getValue();
 }
-function writeStartDate(startDate) {
-  variablesSheet().getRange(2, 1).setValue('startDate');
-  variablesSheet().getRange(2, 2).setValue(startDate);
+function writeWorkingDaysCount(workingDaysCount) {
+  variablesSheet().getRange(2, 1).setValue('workingDaysCount');
+  variablesSheet().getRange(2, 2).setValue(workingDaysCount);
 }
-function readStartDate() {
+function readWorkingDaysCount() {
   return variablesSheet().getRange(2, 2).getValue();
 }
-function writeEndDate(endDate) {
-  variablesSheet().getRange(3, 1).setValue('endDate');
-  variablesSheet().getRange(3, 2).setValue(endDate);
+function writeStartDate(startDate) {
+  variablesSheet().getRange(3, 1).setValue('startDate');
+  variablesSheet().getRange(3, 2).setValue(startDate);
 }
-function readEndDateDate() {
+function readStartDate() {
   return variablesSheet().getRange(3, 2).getValue();
 }
+function writeEndDate(endDate) {
+  variablesSheet().getRange(4, 1).setValue('endDate');
+  variablesSheet().getRange(4, 2).setValue(endDate);
+}
+function readEndDateDate() {
+  return variablesSheet().getRange(4, 2).getValue();
+}
 function writeColumnsCount(columnsCount) {
-  variablesSheet().getRange(4, 1).setValue('columnsCount');
-  variablesSheet().getRange(4, 2).setValue(columnsCount);
+  variablesSheet().getRange(5, 1).setValue('columnsCount');
+  variablesSheet().getRange(5, 2).setValue(columnsCount);
 }
 function readColumnsCount() {
-  return variablesSheet().getRange(4, 2).getValue();
+  return variablesSheet().getRange(5, 2).getValue();
 }
 function variablesSheet() {
   return spreadsheet().getSheetByName('Variables');
@@ -213,10 +221,9 @@ function drawHeader(startDate, endDate) {
     lastRow = scopeSheet().getLastRow();
   }
   
-  alert('Drawing border...');
-  
   drawBorder(currentColumn - 1, false, true);
   drawWorkingDays(1, currentColumn);
+  deleteObsoleteColumns();
 }
 
 function setHeader(row, column, value, width) {
@@ -233,11 +240,11 @@ function drawStoryHeader(row) {
   
   // TODO: remove
 //  SpreadsheetApp.getUi().alert(columnsCount);
-  SpreadsheetApp.getUi().alert('Drawing story header');
+  alert('Drawing story header');
   
   var range = scopeSheet.getRange(row, 1, 1, columnsCount);
   
-  SpreadsheetApp.getUi().alert('Range taken');
+  alert('Range taken');
   
   range.setBackgroundRGB(220, 220, 220);
   range.setFontWeight('bold');
@@ -260,13 +267,10 @@ function drawWorkingDays(startRow, startColumn) {
  var uiInstance = UiApp.createApplication().setTitle('TAF add-on');
  uiInstance.add(uiInstance.createLabel('Please add your Stories with Subtasks in two columns. In third column mark story items with "s".'));
  SpreadsheetApp.getUi().showSidebar(uiInstance);
-  
   daysCount = getDaysCount(startDate, endDate);
   writeDaysCount(daysCount);
-  
-  columnsCount = COLUMNS_INITIAL_COUNT + daysCount;
-  writeColumnsCount(columnsCount);
   var dayNumber = 0;
+  var workingDaysCount = 0;
   while (dayNumber < daysCount && limit > 0) {
     var dayOfWeek = getDayOfWeek(date);
     
@@ -275,6 +279,7 @@ function drawWorkingDays(startRow, startColumn) {
       var range = scopeSheet().getRange(startRow, startColumn);
       range.setValue(Utilities.formatDate(date, "GMT+10", "''dd.MM"));
       startColumn++;
+      workingDaysCount++;
     }
     if (dayOfWeek == 5) {
       // making border at end of week
@@ -284,7 +289,24 @@ function drawWorkingDays(startRow, startColumn) {
     dayNumber++;
     limit--;
   }
+  writeWorkingDaysCount(workingDaysCount);
+  columnsCount = COLUMNS_INITIAL_COUNT + workingDaysCount;
+  writeColumnsCount(columnsCount);
   drawBorder(startColumn, true, false);
+}
+
+function deleteObsoleteColumns() {
+  var columnsCount = readColumnsCount();
+  var counter = 100;
+  var scopeSheet = scopeSheet();
+  while (counter > 0) {
+    try {
+      scopeSheet.deleteColumns(columnsCount + 1, 1);
+    } catch(e) {
+      // ignore
+    }
+    counter--;
+  }
 }
 
 function drawBorder(column, left, right) {
