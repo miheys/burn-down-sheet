@@ -4,9 +4,9 @@ var STORY_MARKER = 's';
 var COLUMNS_INITIAL_COUNT = 8;
 
 // app objects
-var spreadsheet;
-var variablesSheet;
-var scopeSheet;
+//var spreadsheet;
+//var variablesSheet;
+//var scopeSheet;
 
 // local variables
 var daysCount = 0;
@@ -24,7 +24,7 @@ var columnsCount;
  * custom menu to the spreadsheet.
  */
 function onOpen() {
-  spreadsheet = SpreadsheetApp.getActive();
+  var spreadsheet = SpreadsheetApp.getActive();
   var menuItems = [
     {name: 'Generate Template', functionName: 'generateTemplate'},
     {name: 'Process stories', functionName: 'processStories'},
@@ -35,38 +35,38 @@ function onOpen() {
   
   createVariablesSheet();
   
-  generateTemplate();
-  // processStories();
+//  generateTemplate();
+  
+  // TODO: MVO: remove
+  processStories();
 }
 
 /***********************************************
  * Functions for initializing local variables  *
  ***********************************************/
 function createVariablesSheet() {
-  spreadsheet = SpreadsheetApp.getActive();
-  scopeSheet = spreadsheet.getSheetByName('Scope');
+  var spreadsheet = SpreadsheetApp.getActive();
+  var scopeSheet = spreadsheet.getSheetByName('Scope');
   if (scopeSheet == null) {
     scopeSheet = spreadsheet.getActiveSheet();
     scopeSheet.setName('Scope');
   }
-  variablesSheet = spreadsheet.getSheetByName('Variables');
+  var variablesSheet = spreadsheet.getSheetByName('Variables');
   if (variablesSheet == null) {
     variablesSheet = spreadsheet.insertSheet('Variables');
   }
-  
-//  variablesSheet.hideSheet();
-  // TODO: MVO: remove
-//  variablesSheet.showSheet();
+  variablesSheet.hideSheet();
 }
 function initVariables() {
-  spreadsheet = SpreadsheetApp.getActive();
-  scopeSheet = spreadsheet.getSheetByName('Scope');
-  variablesSheet = spreadsheet.getSheetByName('Variables');
-  if (variablesSheet == null) {
+//  spreadsheet = SpreadsheetApp.getActive();
+//  scopeSheet = spreadsheet.getSheetByName('Scope');
+//  variablesSheet = spreadsheet.getSheetByName('Variables');
+  if (variablesSheet() == null) {
     SpreadsheetApp.getUi().alert('You should run Generate Template first');
     return;
   }
   daysCount = readDaysCount();
+  workingDaysCount = readWorkingDaysCount();
   startDate = readStartDate();
   endDate = readEndDate();
   columnsCount = readColumnsCount();
@@ -96,7 +96,7 @@ function writeEndDate(endDate) {
   variablesSheet().getRange(4, 1).setValue('endDate');
   variablesSheet().getRange(4, 2).setValue(endDate);
 }
-function readEndDateDate() {
+function readEndDate() {
   return variablesSheet().getRange(4, 2).getValue();
 }
 function writeColumnsCount(columnsCount) {
@@ -121,33 +121,27 @@ function spreadsheet() {
  * Creates total cells and completes 'Scope' sheet.
  */
 function processStories() {
+  initVariables();
   var row = 2;
   var storyRow = 2;
   while (row < MAX_ROWS) {
     processStoryItem(row);
     row++;
-    
-    row = MAX_ROWS;
   }
+  alert('Processing stories completed');
 }
 
 function processStoryItem(row) {
-  
-  SpreadsheetApp.getUi().alert(row);
-  SpreadsheetApp.getUi().alert('Checking is item is a story');
-  var isStory = scopeSheet.getRange(row, 3).getValue() == STORY_MARKER;
+  var isStory = scopeSheet().getRange(row, 3).getValue() == STORY_MARKER;
   if (isStory) {
-    SpreadsheetApp.getUi().alert('Is Story');
     drawStoryHeader(row);
   }
-  SpreadsheetApp.getUi().alert('Header completed');
 }
 
 /**
  * Creates a new sheet 'Scope' containing sprint issues and work in progress.
  */
 function generateTemplate() {
-   
   userInput();
 }
 
@@ -237,15 +231,7 @@ function setHeader(row, column, value, width) {
 }
 
 function drawStoryHeader(row) {
-  
-  // TODO: remove
-//  SpreadsheetApp.getUi().alert(columnsCount);
-  alert('Drawing story header');
-  
-  var range = scopeSheet.getRange(row, 1, 1, columnsCount);
-  
-  alert('Range taken');
-  
+  var range = scopeSheet().getRange(row, 1, 1, columnsCount);
   range.setBackgroundRGB(220, 220, 220);
   range.setFontWeight('bold');
 }
@@ -253,8 +239,6 @@ function drawStoryHeader(row) {
 function drawWorkingDays(startRow, startColumn) {
   var limit = MAX_ROWS;
   var date = startDate;
-  
-  alert('Drawing working days...');
   
   // Display a sidebar with custom HtmlService content.
  var htmlOutput = HtmlService
