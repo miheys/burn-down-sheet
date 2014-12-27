@@ -1,6 +1,7 @@
 // constants
 var MAX_ROWS = 100;
 var STORY_MARKER = 's';
+var EMPTY_ROW_MARKER = '0';
 var COLUMNS_INITIAL_COUNT = 8;
 
 // app objects
@@ -39,6 +40,65 @@ function onOpen() {
   
   // TODO: MVO: remove
   processStories();
+}
+
+/**
+ * Iterates over input stories and subtasks. Row marked with 's' are considered to be a story.
+ * Creates total cells and completes 'Scope' sheet.
+ */
+function processStories() {
+  initVariables();
+  cleanFormulas();
+  var row = 2;
+  var storyRow = 2;
+  while (row < MAX_ROWS) {
+    var isStory = processStoryItem(row, storyRow);
+    if (isStory[0]) {
+      storyRow = row;
+    }
+    var shouldBreak = isStory[1];
+    if (shouldBreak) {
+      row = MAX_ROWS;
+    }
+    row++;
+  }
+  alert('Processing stories completed');
+}
+
+function processStoryItem(row, storyRow) {
+  var isStory = scopeSheet().getRange(row, 3).getValue() == STORY_MARKER;
+  var isSubtask = !isStory && scopeSheet().getRange(row, 1).getValue() != EMPTY_ROW_MARKER;
+  if (isStory) {
+    drawStoryHeader(row);
+  } else if(isSubtask) {
+    updateStoryFormula(row, storyRow);
+  } else {
+    return [false, true];
+  }
+  return [isStory, false];
+}
+
+function drawStoryHeader(row) {
+  var range = scopeSheet().getRange(row, 1, 1, columnsCount);
+
+  // somehow it stopped working
+  // range.setBackgroundRGB(220, 220, 220);
+  range.setBackground('grey');
+  
+  range.setFontWeight('bold');  
+}
+
+function updateStoryFormula(row, storyRow) {
+  var currentFormula = scopeSheet().getRange(storyRow, 7).getFormula();
+  if (currentFormula == '') {
+    currentFormula = '0';
+  }
+  var subtaskEstimateCell = scopeSheet().getRange(row, 7).getA1Notation();
+  scopeSheet().getRange(storyRow, 7).setFormula(currentFormula + ' + ' + subtaskEstimateCell);
+}
+
+function cleanFormulas() {
+  scopeSheet().getRange(2, 7, 100).setFormula('');
 }
 
 /***********************************************
@@ -117,28 +177,6 @@ function spreadsheet() {
 }
 
 /**
- * Iterates over input stories and subtasks. Row marked with 's' are considered to be a story.
- * Creates total cells and completes 'Scope' sheet.
- */
-function processStories() {
-  initVariables();
-  var row = 2;
-  var storyRow = 2;
-  while (row < MAX_ROWS) {
-    processStoryItem(row);
-    row++;
-  }
-  alert('Processing stories completed');
-}
-
-function processStoryItem(row) {
-  var isStory = scopeSheet().getRange(row, 3).getValue() == STORY_MARKER;
-  if (isStory) {
-    drawStoryHeader(row);
-  }
-}
-
-/**
  * Creates a new sheet 'Scope' containing sprint issues and work in progress.
  */
 function generateTemplate() {
@@ -211,7 +249,7 @@ function drawHeader(startDate, endDate) {
   // extending sheet to MAX_ROWS size
   var lastRow = scopeSheet().getLastRow();
   while (lastRow < MAX_ROWS) {
-    scopeSheet().appendRow(['0']);
+    scopeSheet().appendRow([EMPTY_ROW_MARKER]);
     lastRow = scopeSheet().getLastRow();
   }
   
@@ -228,12 +266,6 @@ function setHeader(row, column, value, width) {
   range.setFontWeight('bold');
   var cell = range.getCell(1, 1);
   cell.setHorizontalAlignment('center');
-}
-
-function drawStoryHeader(row) {
-  var range = scopeSheet().getRange(row, 1, 1, columnsCount);
-  range.setBackgroundRGB(220, 220, 220);
-  range.setFontWeight('bold');
 }
 
 function drawWorkingDays(startRow, startColumn) {
