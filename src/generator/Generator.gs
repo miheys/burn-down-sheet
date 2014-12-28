@@ -16,6 +16,8 @@ var startDate;
 var endDate;
 var columnsCount;
 
+var storyRows = [];
+
 /***********************************************
  * Menu items functions                        *
  ***********************************************/
@@ -55,19 +57,56 @@ function processStories() {
     var isStory = processStoryItem(row, storyRow);
     if (isStory[0]) {
       storyRow = row;
+      storyRows = storyRows.concat(row);
     }
     var shouldBreak = isStory[1];
     if (shouldBreak) {
-      row = MAX_ROWS;
+      trimRows(row);
+      MAX_ROWS = row;
     }
     row++;
   }
+  
+  appendTotalEstimate(row - 1);
+  appendTotalDevelopers(row);
+  
   alert('Processing stories completed');
+}
+
+function trimRows(row) {
+  scopeSheet().deleteRows(row, scopeSheet().getLastRow() - row + 1);
+  var i = 0;
+  while (i < 100) {
+    try {
+      i++;
+      scopeSheet().deleteRows(row, 2);
+    } catch(e) {
+      // ignore
+    }
+  }
+}
+
+function appendTotalEstimate(row) {
+  scopeSheet().appendRow(['','','','Total estimate:','','','']);
+  scopeSheet().getRange(row, 1, 2, columnsCount).setHorizontalAlignment('right');
+  scopeSheet().getRange(row, 1, 2, columnsCount).setFontWeight('bold');
+  scopeSheet().getRange(row, 1, 2, columnsCount).setBackgroundRGB(200, 200, 200);
+  var estimatesColumn = 7;
+  for (storyRow in storyRows) {
+    var storyEstimateAddress = scopeSheet().getRange(storyRows[storyRow], estimatesColumn).getA1Notation();
+    var totalEstimatesCell = scopeSheet().getRange(row, estimatesColumn);
+    totalEstimatesCell.setFormula(totalEstimatesCell.getFormula() + ' + ' + storyEstimateAddress);
+  }
+}
+
+function appendTotalDevelopers(row) {
+  scopeSheet().appendRow(['','','','Developer days available:','','']);
+  scopeSheet().getRange(row, 2, 1, 3).merge();
 }
 
 function processStoryItem(row, storyRow) {
   var isStory = scopeSheet().getRange(row, 3).getValue() == STORY_MARKER;
-  var isSubtask = !isStory && scopeSheet().getRange(row, 1).getValue() != EMPTY_ROW_MARKER;
+  var isSubtask = !isStory && scopeSheet().getRange(row, 1).getValue() != EMPTY_ROW_MARKER && scopeSheet().getRange(row, 1).getValue() != '';
   if (isStory) {
     drawStoryHeader(row);
   } else if(isSubtask) {
@@ -80,11 +119,7 @@ function processStoryItem(row, storyRow) {
 
 function drawStoryHeader(row) {
   var range = scopeSheet().getRange(row, 1, 1, columnsCount);
-
-  // somehow it stopped working
-  // range.setBackgroundRGB(220, 220, 220);
-  range.setBackground('grey');
-  
+  range.setBackgroundRGB(220, 220, 220);
   range.setFontWeight('bold');  
 }
 
@@ -118,9 +153,6 @@ function createVariablesSheet() {
   variablesSheet.hideSheet();
 }
 function initVariables() {
-//  spreadsheet = SpreadsheetApp.getActive();
-//  scopeSheet = spreadsheet.getSheetByName('Scope');
-//  variablesSheet = spreadsheet.getSheetByName('Variables');
   if (variablesSheet() == null) {
     SpreadsheetApp.getUi().alert('You should run Generate Template first');
     return;
