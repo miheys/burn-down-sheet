@@ -38,10 +38,10 @@ function onOpen() {
   
   createVariablesSheet();
   
-//  generateTemplate();
+  generateTemplate();
   
   // TODO: MVO: remove
-  processStories();
+//  processStories();
 }
 
 /**
@@ -151,6 +151,8 @@ function createVariablesSheet() {
     variablesSheet = spreadsheet.insertSheet('Variables');
   }
   variablesSheet.hideSheet();
+  // TODO: MVO: remove
+  variablesSheet.showSheet();
 }
 function initVariables() {
   if (variablesSheet() == null) {
@@ -164,39 +166,47 @@ function initVariables() {
   columnsCount = readColumnsCount();
 }
 function writeDaysCount(daysCount) {
-  variablesSheet().getRange(1, 1).setValue('daysCount');
-  variablesSheet().getRange(1, 2).setValue(daysCount);
+  writeKeyValue(1, 'daysCount', daysCount);
 }
 function readDaysCount() {
-  return variablesSheet().getRange(1, 2).getValue();
+  return readKeyValue(1);
 }
 function writeWorkingDaysCount(workingDaysCount) {
-  variablesSheet().getRange(2, 1).setValue('workingDaysCount');
-  variablesSheet().getRange(2, 2).setValue(workingDaysCount);
+  writeKeyValue(2, 'workingDaysCount', workingDaysCount);
 }
 function readWorkingDaysCount() {
-  return variablesSheet().getRange(2, 2).getValue();
+  return readKeyValue(2);
 }
 function writeStartDate(startDate) {
-  variablesSheet().getRange(3, 1).setValue('startDate');
-  variablesSheet().getRange(3, 2).setValue(startDate);
+  writeKeyValue(3, 'startDate', startDate);
 }
 function readStartDate() {
-  return variablesSheet().getRange(3, 2).getValue();
+  return readKeyValue(3);
 }
 function writeEndDate(endDate) {
-  variablesSheet().getRange(4, 1).setValue('endDate');
-  variablesSheet().getRange(4, 2).setValue(endDate);
+  writeKeyValue(4, 'endDate', endDate);
 }
 function readEndDate() {
-  return variablesSheet().getRange(4, 2).getValue();
+  return readKeyValue(4);
 }
 function writeColumnsCount(columnsCount) {
-  variablesSheet().getRange(5, 1).setValue('columnsCount');
-  variablesSheet().getRange(5, 2).setValue(columnsCount);
+  writeKeyValue(5, 'columnsCount', columnsCount);
 }
 function readColumnsCount() {
-  return variablesSheet().getRange(5, 2).getValue();
+  return readKeyValue(5);
+}
+function writeDevelopersCount(developersCount) {
+  writeKeyValue(6, 'developersCount', developersCount);
+}
+function readDevelopersCount() {
+  return readKeyValue(6);
+}
+function writeKeyValue(row, key, value) {
+  variablesSheet().getRange(row, 1).setValue(key);
+  variablesSheet().getRange(row, 2).setValue(value);
+}
+function readKeyValue(row) {
+  return variablesSheet().getRange(row, 2).getValue();
 }
 function variablesSheet() {
   return spreadsheet().getSheetByName('Variables');
@@ -235,16 +245,21 @@ function userInput() {
   var panel = app.createVerticalPanel();
   var startDateBox = app.createDateBox().setName("startDate");
   var endDateBox = app.createDateBox().setName("endDate");
+  var developersCountBox = app.createTextBox().setName("developersCount");
   var button = app.createButton('submit');
   var handler = app.createServerHandler('drawTemplate');
   
   var startDateLabel = app.createLabel("Please enter Sprint start date: ");
   var endDateLabel = app.createLabel("Please enter Sprint end date: ");
-  var delimiter = app.createLabel("\n")
+  var developersCountLabel = app.createLabel("Please enter available developers count: ");
+  var delimiter = app.createLabel("\n\n");
   
   handler.addCallbackElement(panel);
   button.addClickHandler(handler);
-  panel.add(startDateLabel).add(startDateBox).add(delimiter).add(endDateLabel).add(endDateBox).add(button);
+  panel.add(startDateLabel).add(startDateBox).add(delimiter);
+  panel.add(endDateLabel).add(endDateBox).add(delimiter);
+  panel.add(developersCountLabel).add(developersCountBox).add(delimiter);
+  panel.add(button);
   app.add(panel);
   sh.show(app);
   app.close();
@@ -262,6 +277,9 @@ function drawTemplate(e){
   endDate = new Date(e.parameter.endDate);
   writeEndDate(endDate);
   
+  var developersCount = +e.parameter.developersCount;
+  writeDevelopersCount(developersCount);
+  
   drawHeader(startDate, endDate);
 }
 
@@ -275,19 +293,40 @@ function drawHeader(startDate, endDate) {
   setHeader(1, currentColumn++, 'Verified', 60);
   setHeader(1, currentColumn++, 'Est.', 40);
   setHeader(1, currentColumn++, ' ', 20);
+//  alert('Drawing headers completed');
+  
   scopeSheet().setFrozenRows(1);
   scopeSheet().setFrozenColumns(4);
+//  alert('Freezing completed');
   
-  // extending sheet to MAX_ROWS size
+  // extending sheet columns
+  var lastColumn = scopeSheet().getLastColumn();
+  var maxLimit = 100;
+  while (lastColumn < MAX_ROWS && maxLimit > 0) {
+    maxLimit--;
+    scopeSheet().insertColumnAfter(lastColumn);
+    lastColumn = scopeSheet().getLastColumn();
+  }
+  
+  // extending sheet rows
   var lastRow = scopeSheet().getLastRow();
-  while (lastRow < MAX_ROWS) {
+  maxLimit = 100;
+  while (lastRow < MAX_ROWS && maxLimit > 0) {
+    maxLimit--;
     scopeSheet().appendRow([EMPTY_ROW_MARKER]);
     lastRow = scopeSheet().getLastRow();
   }
+//  alert('Extending rows completed');
   
   drawBorder(currentColumn - 1, false, true);
+//  alert('Drawing border completed');
+  
   drawWorkingDays(1, currentColumn);
+  alert('Drawing working days completed');
+  
   deleteObsoleteColumns();
+//  alert('Deletion obsolete columns completed');
+  alert('Drawing template completed');
 }
 
 function setHeader(row, column, value, width) {
@@ -346,15 +385,15 @@ function drawWorkingDays(startRow, startColumn) {
 function deleteObsoleteColumns() {
   var columnsCount = readColumnsCount();
   var counter = 100;
-  var scopeSheet = scopeSheet();
   while (counter > 0) {
     try {
-      scopeSheet.deleteColumns(columnsCount + 1, 1);
+      counter--;
+      scopeSheet().deleteColumns(columnsCount + 1, 1);
     } catch(e) {
       // ignore
     }
-    counter--;
   }
+  alert('Max Column: ' + scopeSheet().getMaxColumns());
 }
 
 function drawBorder(column, left, right) {
