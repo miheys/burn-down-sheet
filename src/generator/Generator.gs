@@ -3,6 +3,7 @@ var MAX_ROWS = 100;
 var STORY_MARKER = 's';
 var EMPTY_ROW_MARKER = '0';
 var COLUMNS_INITIAL_COUNT = 8;
+var ESTIMATES_COLUMN = 7;
 
 // app objects
 //var spreadsheet;
@@ -38,10 +39,10 @@ function onOpen() {
   
   createVariablesSheet();
   
-  generateTemplate();
+  //generateTemplate();
   
   // TODO: MVO: remove
-//  processStories();
+  processStories();
 }
 
 /**
@@ -91,10 +92,9 @@ function appendTotalEstimate(row) {
   scopeSheet().getRange(row, 1, 2, columnsCount).setHorizontalAlignment('right');
   scopeSheet().getRange(row, 1, 2, columnsCount).setFontWeight('bold');
   scopeSheet().getRange(row, 1, 2, columnsCount).setBackgroundRGB(200, 200, 200);
-  var estimatesColumn = 7;
   for (storyRow in storyRows) {
-    var storyEstimateAddress = scopeSheet().getRange(storyRows[storyRow], estimatesColumn).getA1Notation();
-    var totalEstimatesCell = scopeSheet().getRange(row, estimatesColumn);
+    var storyEstimateAddress = scopeSheet().getRange(storyRows[storyRow], ESTIMATES_COLUMN).getA1Notation();
+    var totalEstimatesCell = scopeSheet().getRange(row, ESTIMATES_COLUMN);
     totalEstimatesCell.setFormula(totalEstimatesCell.getFormula() + ' + ' + storyEstimateAddress);
   }
 }
@@ -102,6 +102,11 @@ function appendTotalEstimate(row) {
 function appendTotalDevelopers(row) {
   scopeSheet().appendRow(['','','','Developer days available:','','']);
   scopeSheet().getRange(row, 2, 1, 3).merge();
+  var developersCount = readDevelopersCount();
+  scopeSheet().getRange(row, COLUMNS_INITIAL_COUNT + 1, 1, readWorkingDaysCount()).setValue(developersCount);
+  var start = scopeSheet().getRange(row, COLUMNS_INITIAL_COUNT + 1).getA1Notation();
+  var stop = scopeSheet().getRange(row, readColumnsCount()).getA1Notation();
+  scopeSheet().getRange(row, ESTIMATES_COLUMN).setFormula('=SUM(' + start + ':' + stop + ')');
 }
 
 function processStoryItem(row, storyRow) {
@@ -124,16 +129,16 @@ function drawStoryHeader(row) {
 }
 
 function updateStoryFormula(row, storyRow) {
-  var currentFormula = scopeSheet().getRange(storyRow, 7).getFormula();
+  var currentFormula = scopeSheet().getRange(storyRow, ESTIMATES_COLUMN).getFormula();
   if (currentFormula == '') {
     currentFormula = '0';
   }
-  var subtaskEstimateCell = scopeSheet().getRange(row, 7).getA1Notation();
-  scopeSheet().getRange(storyRow, 7).setFormula(currentFormula + ' + ' + subtaskEstimateCell);
+  var subtaskEstimateCell = scopeSheet().getRange(row, ESTIMATES_COLUMN).getA1Notation();
+  scopeSheet().getRange(storyRow, ESTIMATES_COLUMN).setFormula(currentFormula + ' + ' + subtaskEstimateCell);
 }
 
 function cleanFormulas() {
-  scopeSheet().getRange(2, 7, 100).setFormula('');
+  scopeSheet().getRange(2, ESTIMATES_COLUMN, 100).setFormula('');
 }
 
 /***********************************************
