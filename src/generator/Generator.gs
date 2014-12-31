@@ -97,6 +97,13 @@ function appendTotalEstimate(row) {
     var totalEstimatesCell = scopeSheet().getRange(row, ESTIMATES_COLUMN);
     totalEstimatesCell.setFormula(totalEstimatesCell.getFormula() + ' + ' + storyEstimateAddress);
   }
+  var column = COLUMNS_INITIAL_COUNT + 1;
+  while (column <= readColumnsCount()) {
+    var start = scopeSheet().getRange(2, column).getA1Notation();
+    var stop = scopeSheet().getRange(row - 1, column).getA1Notation()
+    scopeSheet().getRange(row, column).setFormula('=COUNTIF(' + start + ':' + stop + ';">0")');
+    column++;
+  }
 }
 
 function appendTotalDevelopers(row) {
