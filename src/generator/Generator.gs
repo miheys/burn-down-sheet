@@ -70,8 +70,46 @@ function processStories() {
   
   appendTotalEstimate(row - 1);
   appendTotalDevelopers(row);
+  addConditionalFormatting();
   
   alert('Processing stories completed');
+}
+
+function addConditionalFormatting() {
+  ScriptApp.newTrigger('updateConditionalFormatting')
+      .forSpreadsheet(SpreadsheetApp.getActive())
+      .onEdit()
+      .create();
+}
+
+function updateConditionalFormatting(e) {
+  
+  // passing single cell changes only
+  var value = e.value;  
+  if (value != null) {
+    var range = e.range;
+    
+    // passing Scope sheet changes only
+    if (range.getSheet().getName() == 'Scope') {
+      
+      // passing work in progress range changes only
+      if (isCellInRange(range, 3, 100, COLUMNS_INITIAL_COUNT, readColumnsCount())) {
+        if (value == 0) {
+          range.setBackgroundRGB(0, 200, 0);
+          scopeSheet().getRange(range.getRow(), 7).setBackgroundRGB(0, 200, 0);
+        } else if(value > 0) {
+          range.setBackgroundRGB(255, 255, 255);
+          scopeSheet().getRange(range.getRow(), 7).setBackgroundRGB(255, 255, 255);
+        }
+      }
+    }
+  }
+}
+
+function isCellInRange(cell, fromRow, toRow, fromColumn, toColumn) {
+  var row = cell.getRow();
+  var column = cell.getColumn();
+  return row >= fromRow && row <= toRow && column >= fromColumn && column <= toColumn;
 }
 
 function trimRows(row) {
