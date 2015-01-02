@@ -39,10 +39,11 @@ function onOpen() {
   
   createVariablesSheet();
   
-  //generateTemplate();
+//generateTemplate();
   
   // TODO: MVO: remove
-  processStories();
+//  processStories();
+  generateModel();
 }
 
 /**
@@ -68,6 +69,7 @@ function processStories() {
     row++;
   }
   
+  writeRowsCount(row);
   appendTotalEstimate(row - 1);
   appendTotalDevelopers(row);
   addConditionalFormatting();
@@ -201,7 +203,8 @@ function createVariablesSheet() {
     variablesSheet = spreadsheet.insertSheet('Variables');
   }
   variablesSheet.hideSheet();
-  // TODO: MVO: remove
+  
+  // TODO: remove
   variablesSheet.showSheet();
 }
 function initVariables() {
@@ -251,6 +254,12 @@ function writeDevelopersCount(developersCount) {
 function readDevelopersCount() {
   return readKeyValue(6);
 }
+function writeRowsCount(rowsCount) {
+  writeKeyValue(7, 'rowsCount', rowsCount);
+}
+function readRowsCount() {
+  return readKeyValue(7);
+}
 function writeKeyValue(row, key, value) {
   variablesSheet().getRange(row, 1).setValue(key);
   variablesSheet().getRange(row, 2).setValue(value);
@@ -263,6 +272,9 @@ function variablesSheet() {
 }
 function scopeSheet() {
   return spreadsheet().getSheetByName('Scope');
+}
+function modelSheet() {
+  return spreadsheet().getSheetByName('Model');
 }
 function spreadsheet() {
   return SpreadsheetApp.getActive();
@@ -280,6 +292,33 @@ function generateTemplate() {
  */
 function generateModel() {
   initVariables();
+  createModelSheet();
+  updateModelHeader();
+  updateModel();
+}
+function createModelSheet() {
+  var spreadsheet = SpreadsheetApp.getActive();
+  var modelSheet = spreadsheet.getSheetByName('Model');
+  if (modelSheet == null) {
+    modelSheet = spreadsheet.duplicateActiveSheet();
+    modelSheet.setName('Model');
+  }
+}
+function updateModelHeader() {
+  modelSheet().deleteColumn(1);
+  modelSheet().getRange(1, 1, 1, 7).clearContent();
+  modelSheet().getRange(1, 3).setValue('Init');
+  modelSheet().getRange(1, 4).setValue('Real');
+  modelSheet().getRange(1, 5).setValue('Done');
+  modelSheet().getRange(1, 6).setValue('Δ');
+}
+function updateModel() {
+  var row = 2;
+  while (row <= readRowsCount() - 2) {
+    var range = modelSheet().getRange(row, 1);
+    range.setFormula('=Scope!' + range.getA1Notation());
+    row++;
+  }
 }
 
 /**
