@@ -18,6 +18,7 @@ var endDate;
 var columnsCount;
 
 var storyRows = [];
+var subtaskRows = [];
 
 /***********************************************
  * Menu items functions                        *
@@ -47,6 +48,77 @@ function onOpen() {
 }
 
 /**
+ * Creates a new sheet 'Model' containing sprint progress data for praphs.
+ */
+function generateModel() {
+  initVariables();
+  createModelSheet();
+  updateModelHeader();
+  updateModel();
+}
+function createModelSheet() {
+  var spreadsheet = SpreadsheetApp.getActive();
+  var modelSheet = spreadsheet.getSheetByName('Model');
+  if (modelSheet == null) {
+    modelSheet = spreadsheet.duplicateActiveSheet();
+    modelSheet.setName('Model');
+    modelSheet.deleteColumn(1);
+    modelSheet.getRange(1, 2, readRowsCount(), 1).copyTo(modelSheet.getRange(1, 7, readRowsCount(), 1))
+  }
+}
+function updateModelHeader() {
+  modelSheet().getRange(1, 1, 1, 7).clearContent();
+  modelSheet().getRange(1, 3).setValue('Init');
+  modelSheet().getRange(1, 4).setValue('Real');
+  modelSheet().getRange(1, 5).setValue('Done');
+  modelSheet().getRange(1, 6).setValue('Δ');
+  modelSheet().setFrozenColumns(7);
+}
+function updateModel() {
+  readStoriesRows(7);
+  var row = 2;
+  while (row <= readRowsCount() - 2) {
+    var range = modelSheet().getRange(row, 1);
+    range.setFormula('=Scope!' + range.getA1Notation());
+    row++;
+  }
+}
+function readStoriesRows(storyMarkerColumn) {
+  storyRows = [];
+  subtaskRows = [];
+  var row = 2;
+  var storyRow = 2;
+  var storyIndex = 0;
+  while (row <= readRowsCount()) {
+    var isStory = modelSheet().getRange(row, storyMarkerColumn).getValue() == STORY_MARKER;
+    if (isStory) {
+      storyRows = storyRows.concat(row);
+      var subtasksStarted = storyRow + 1;
+      var subtasksStopped = row - 1;
+      var storySubtasks = [];
+      while (subtasksStopped - subtasksStarted >= 0) {
+        storySubtasks = storySubtasks.concat(subtasksStarted);
+        subtasksStarted++;
+      }
+      if (row > 2) {
+        subtaskRows[storyIndex] = storySubtasks;
+        storyIndex++;
+      }
+      storyRow = row;
+    }
+    row++;
+  }
+  var subtasksStarted = storyRow + 1;
+  var subtasksStopped = row - 1;
+  var storySubtasks = [];
+  while (subtasksStopped - subtasksStarted >= 0) {
+    storySubtasks = storySubtasks.concat(subtasksStarted);
+    subtasksStarted++;
+  }
+  subtaskRows[storyIndex] = storySubtasks;
+}
+
+/**
  * Iterates over input stories and subtasks. Row marked with 's' are considered to be a story.
  * Creates total cells and completes 'Scope' sheet.
  */
@@ -69,7 +141,7 @@ function processStories() {
     row++;
   }
   
-  writeRowsCount(row);
+  writeRowsCount(row - 2);
   appendTotalEstimate(row - 1);
   appendTotalDevelopers(row);
   addConditionalFormatting();
@@ -285,40 +357,6 @@ function spreadsheet() {
  */
 function generateTemplate() {
   userInput();
-}
-
-/**
- * Creates a new sheet 'Model' containing sprint progress data for praphs.
- */
-function generateModel() {
-  initVariables();
-  createModelSheet();
-  updateModelHeader();
-  updateModel();
-}
-function createModelSheet() {
-  var spreadsheet = SpreadsheetApp.getActive();
-  var modelSheet = spreadsheet.getSheetByName('Model');
-  if (modelSheet == null) {
-    modelSheet = spreadsheet.duplicateActiveSheet();
-    modelSheet.setName('Model');
-  }
-}
-function updateModelHeader() {
-  modelSheet().deleteColumn(1);
-  modelSheet().getRange(1, 1, 1, 7).clearContent();
-  modelSheet().getRange(1, 3).setValue('Init');
-  modelSheet().getRange(1, 4).setValue('Real');
-  modelSheet().getRange(1, 5).setValue('Done');
-  modelSheet().getRange(1, 6).setValue('Δ');
-}
-function updateModel() {
-  var row = 2;
-  while (row <= readRowsCount() - 2) {
-    var range = modelSheet().getRange(row, 1);
-    range.setFormula('=Scope!' + range.getA1Notation());
-    row++;
-  }
 }
 
 /**
