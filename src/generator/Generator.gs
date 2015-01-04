@@ -77,10 +77,23 @@ function updateModelHeader() {
 function updateModel() {
   readStoriesRows(7);
   var row = 2;
+  // unified formatting for both stories and subtasks
   while (row <= readRowsCount() - 2) {
     var range = modelSheet().getRange(row, 1);
     range.setFormula('=Scope!' + range.getA1Notation());
     row++;
+  }
+  // processing stories
+  for (index in storyRows) {
+    var storyRow = storyRows[index];
+    var estimatesLocation = modelSheet().getRange(storyRow, ESTIMATES_COLUMN).getA1Notation();
+    var subtaskDoneRange = modelSheet().getRange(subtaskRows[index][0], 5, subtaskRows[index].length).getA1Notation();
+    var storyCompletionFormula = '=IF((Scope!' + estimatesLocation + '=0);"";(COUNTIF(' + subtaskDoneRange + ';"=TRUE")/COUNTA(' + subtaskDoneRange + ')))';
+    modelSheet().getRange(storyRow, 2).setFormula(storyCompletionFormula);
+  }
+  
+  for (story in subtaskRows) {
+    var subtasks = subtaskRows[story];
   }
 }
 function readStoriesRows(storyMarkerColumn) {
