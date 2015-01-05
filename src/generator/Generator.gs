@@ -94,6 +94,19 @@ function updateModel() {
   
   for (story in subtaskRows) {
     var subtasks = subtaskRows[story];
+    for (subtaskIndex in subtasks) {
+      var subtask = subtasks[subtaskIndex];
+      // updating B column
+      var extCell = scopeSheet().getRange(subtask, 3).getA1Notation();
+      modelSheet().getRange(subtask, 2).setFormula('=Scope!' + extCell);
+      // updating C column (Init)
+      var initCell = scopeSheet().getRange(subtask, 7).getA1Notation();
+      modelSheet().getRange(subtask, 3).setFormula('=IF((Scope!$' + extCell + '<>"");0;Scope!' + initCell + ')');
+      // updating D column (Real)
+      var initCell = scopeSheet().getRange(subtask, 7).getA1Notation();
+      var workingDaysRange = scopeSheet().getRange(subtask, COLUMNS_INITIAL_COUNT + 1, 1, readColumnsCount() - COLUMNS_INITIAL_COUNT);
+      modelSheet().getRange(subtask, 4).setFormula('=IF((Scope!$' + extCell + '<>"");0;COUNTIF(Scope!' + workingDaysRange.getA1Notation() + ';">0"))');
+    }
   }
 }
 function readStoriesRows(storyMarkerColumn) {
