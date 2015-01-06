@@ -100,12 +100,18 @@ function updateModel() {
       var extCell = scopeSheet().getRange(subtask, 3).getA1Notation();
       modelSheet().getRange(subtask, 2).setFormula('=Scope!' + extCell);
       // updating C column (Init)
-      var initCell = scopeSheet().getRange(subtask, 7).getA1Notation();
-      modelSheet().getRange(subtask, 3).setFormula('=IF((Scope!$' + extCell + '<>"");0;Scope!' + initCell + ')');
+      var estimateCell = scopeSheet().getRange(subtask, 7).getA1Notation();
+      modelSheet().getRange(subtask, 3).setFormula('=IF((Scope!$' + extCell + '<>"");0;Scope!' + estimateCell + ')');
       // updating D column (Real)
-      var initCell = scopeSheet().getRange(subtask, 7).getA1Notation();
       var workingDaysRange = scopeSheet().getRange(subtask, COLUMNS_INITIAL_COUNT + 1, 1, readColumnsCount() - COLUMNS_INITIAL_COUNT);
       modelSheet().getRange(subtask, 4).setFormula('=IF((Scope!$' + extCell + '<>"");0;COUNTIF(Scope!' + workingDaysRange.getA1Notation() + ';">0"))');
+      // updating E column (Done)
+      modelSheet().getRange(subtask, 5).setFormula('=IF((Scope!' + extCell + '="");IF((' + extCell + '=0);"";(COUNTIF(Scope!' + workingDaysRange.getA1Notation() + ';"=0")>0));(Scope!' + extCell + '="D"))');
+      // updating D column (Δ)
+      var doneCell = modelSheet().getRange(subtask, 5).getA1Notation();
+      var initCell = modelSheet().getRange(subtask, 3).getA1Notation();
+      var realCell = modelSheet().getRange(subtask, 4).getA1Notation();
+      modelSheet().getRange(subtask, 6).setFormula('=IF(' + doneCell + ';(' + initCell + '-' + realCell + ');"")');
     }
   }
 }
