@@ -64,6 +64,7 @@ function createModelSheet() {
     modelSheet.setName('Model');
     modelSheet.deleteColumn(1);
     modelSheet.getRange(1, 2, readRowsCount(), 1).copyTo(modelSheet.getRange(1, 7, readRowsCount(), 1))
+    modelSheet.insertColumnAfter(7);
   }
 }
 function updateModelHeader() {
@@ -72,7 +73,7 @@ function updateModelHeader() {
   modelSheet().getRange(1, 4).setValue('Real');
   modelSheet().getRange(1, 5).setValue('Done');
   modelSheet().getRange(1, 6).setValue('Δ');
-  modelSheet().setFrozenColumns(7);
+  modelSheet().setFrozenColumns(8);
 }
 function updateModel() {
   readStoriesRows(7);
@@ -112,6 +113,17 @@ function updateModel() {
       var initCell = modelSheet().getRange(subtask, 3).getA1Notation();
       var realCell = modelSheet().getRange(subtask, 4).getA1Notation();
       modelSheet().getRange(subtask, 6).setFormula('=IF(' + doneCell + ';(' + initCell + '-' + realCell + ');"")');
+      // updating working days formula
+      var column = COLUMNS_INITIAL_COUNT + 1;
+      var cell = modelSheet().getRange(subtask, column).getA1Notation();
+      modelSheet().getRange(subtask, column).setFormula('=IF((Scope!$' + extCell + '<>"");0;IF(ISBLANK(Scope!' + cell + ');Scope!' + estimateCell + ';Scope!' + cell + '))');
+      column++;
+      while (column <= readColumnsCount()) {
+        var cell = modelSheet().getRange(subtask, column).getA1Notation();
+        var previousCell = modelSheet().getRange(subtask, column - 1).getA1Notation();
+        modelSheet().getRange(subtask, column).setFormula('=IF((Scope!$' + extCell + '<>"");0;IF(ISBLANK(Scope!' + cell + ');' + previousCell + ';Scope!' + cell + '))');
+        column++;
+      }
     }
   }
 }
