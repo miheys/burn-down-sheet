@@ -38,13 +38,33 @@ function onOpen() {
   ];
   spreadsheet.addMenu('Scrum', menuItems);
   
-  createVariablesSheet();
+  //createVariablesSheet();
   
 //generateTemplate();
   
   // TODO: MVO: remove
 //  processStories();
-  generateModel();
+//  generateModel();
+  generateChart();
+}
+
+/**
+ * Creates a new sheet 'Chart' containing sprint burn down chart
+ */
+function generateChart() {
+  initVariables();
+  if (chartSheet() == null) {
+    spreadsheet().insertSheet('Chart');
+  }
+  
+  // Model!H49:V49, Model!H48:V48
+  var chart = chartSheet().newChart()
+    .setChartType(Charts.ChartType.LINE)
+    .addRange(modelSheet().getRange('Model!H49:V49'))
+    .setPosition(5, 5, 0, 0)
+    .build();
+  
+  chartSheet().insertChart(chart);
 }
 
 /**
@@ -392,6 +412,9 @@ function scopeSheet() {
 function modelSheet() {
   return spreadsheet().getSheetByName('Model');
 }
+function chartSheet() {
+  return spreadsheet().getSheetByName('Chart');
+}
 function spreadsheet() {
   return SpreadsheetApp.getActive();
 }
@@ -401,13 +424,6 @@ function spreadsheet() {
  */
 function generateTemplate() {
   userInput();
-}
-
-/**
- * Creates a new sheet 'Charts' containing burn down graphs.
- */
-function generateChart() {
-  initVariables();
 }
 
 function userInput() {
