@@ -146,6 +146,22 @@ function updateModel() {
       }
     }
   }
+  // updating data for chart
+  var daysLeftRow = readRowsCount() + 1;
+  var daysPlannedRow = readRowsCount() + 2;
+  alert('DaysLeftRow: ' + daysLeftRow);
+  modelSheet().getRange(daysLeftRow, 8).setValue('Ideal days left');
+  modelSheet().getRange(daysPlannedRow, 8).setValue('Ideal sprint');
+  var column = COLUMNS_INITIAL_COUNT + 1;
+  while (column <= readColumnsCount()) {
+    var firstRowCell = modelSheet().getRange(2, column).getA1Notation();
+    var lastRowCell = modelSheet().getRange(readRowsCount(), column).getA1Notation();
+    modelSheet().getRange(daysLeftRow, column).setFormula('=SUM(' + firstRowCell + ':' + lastRowCell + ')');
+    var currentCell = scopeSheet().getRange(daysPlannedRow, column).getA1Notation();
+    var lastWorkingDayCell = scopeSheet().getRange(daysPlannedRow, readColumnsCount()).getA1Notation();
+    modelSheet().getRange(daysPlannedRow, column).setFormula('=SUM(Scope!' + currentCell + ':$' + lastWorkingDayCell + ')');
+    column++;
+  }
 }
 function readStoriesRows(storyMarkerColumn) {
   storyRows = [];
