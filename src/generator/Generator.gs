@@ -58,10 +58,32 @@ function generateChart() {
   }
   
   // Model!H49:V49, Model!H48:V48
-  var chart = chartSheet().newChart()
+  
+  // chart is correctable manually
+//   var chart = chartSheet().newChart().asLineChart()
+//    .setChartType(Charts.ChartType.LINE)
+//    .addRange(modelSheet().getRange('Model!H49:V49'))
+//    .addRange(modelSheet().getRange('Model!H48:V48'))
+//    .setCurveStyle(Charts.CurveStyle.SMOOTH)
+////    .reverseCategories()
+//    .setPosition(5, 5, 0, 0)
+//    .setOption('title', 'Burn it down')
+////    .setOption('aggregationTarget', 'series')
+////    .setOption('useFirstColumnAsDomain','true')
+//    .setOption('orientation', 'horizontal')
+//    .build();
+  
+  var chart = chartSheet().newChart().asLineChart()
     .setChartType(Charts.ChartType.LINE)
     .addRange(modelSheet().getRange('Model!H49:V49'))
+    .addRange(modelSheet().getRange('Model!H48:V48'))
+    .setCurveStyle(Charts.CurveStyle.SMOOTH)
+//    .reverseCategories()
     .setPosition(5, 5, 0, 0)
+    .setOption('title', 'Burn it down')
+    .setOption('aggregationTarget', 'category')
+//    .setOption('useFirstColumnAsDomain','true')
+    .setOption('orientation', 'horizontal')
     .build();
   
   chartSheet().insertChart(chart);
