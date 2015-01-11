@@ -37,15 +37,6 @@ function onOpen() {
     {name: 'Generate Chart', functionName: 'generateChart'}
   ];
   spreadsheet.addMenu('Scrum', menuItems);
-  
-  //createVariablesSheet();
-  
-//generateTemplate();
-  
-  // TODO: MVO: remove
-//  processStories();
-//  generateModel();
-  generateChart();
 }
 
 /**
@@ -58,33 +49,22 @@ function generateChart() {
   }
   
   // Model!H49:V49, Model!H48:V48
+  var chartRange1 = modelSheet().getRange(readRowsCount() + 1, COLUMNS_INITIAL_COUNT, 1, readColumnsCount() - COLUMNS_INITIAL_COUNT);
+  var chartRange2 = modelSheet().getRange(readRowsCount() + 2, COLUMNS_INITIAL_COUNT, 1, readColumnsCount() - COLUMNS_INITIAL_COUNT);
   
   // chart is correctable manually
-//   var chart = chartSheet().newChart().asLineChart()
-//    .setChartType(Charts.ChartType.LINE)
-//    .addRange(modelSheet().getRange('Model!H49:V49'))
-//    .addRange(modelSheet().getRange('Model!H48:V48'))
-//    .setCurveStyle(Charts.CurveStyle.SMOOTH)
-////    .reverseCategories()
-//    .setPosition(5, 5, 0, 0)
-//    .setOption('title', 'Burn it down')
-////    .setOption('aggregationTarget', 'series')
-////    .setOption('useFirstColumnAsDomain','true')
-//    .setOption('orientation', 'horizontal')
-//    .build();
-  
-  var chart = chartSheet().newChart().asLineChart()
+   var chart = chartSheet().newChart().asLineChart()
     .setChartType(Charts.ChartType.LINE)
-    .addRange(modelSheet().getRange('Model!H49:V49'))
-    .addRange(modelSheet().getRange('Model!H48:V48'))
+    .addRange(chartRange1)
+    .addRange(chartRange2)
     .setCurveStyle(Charts.CurveStyle.SMOOTH)
-//    .reverseCategories()
     .setPosition(5, 5, 0, 0)
     .setOption('title', 'Burn it down')
-    .setOption('aggregationTarget', 'category')
-//    .setOption('useFirstColumnAsDomain','true')
     .setOption('orientation', 'horizontal')
     .build();
+//    .reverseCategories()
+//    .setOption('aggregationTarget', 'series')
+//    .setOption('useFirstColumnAsDomain','true')
   
   chartSheet().insertChart(chart);
 }
@@ -121,7 +101,7 @@ function updateModel() {
   readStoriesRows(7);
   var row = 2;
   // unified formatting for both stories and subtasks
-  while (row <= readRowsCount() - 2) {
+  while (row <= readRowsCount()) {
     var range = modelSheet().getRange(row, 1);
     range.setFormula('=Scope!' + range.getA1Notation());
     row++;
@@ -168,10 +148,10 @@ function updateModel() {
       }
     }
   }
+  modelSheet().autoResizeColumn(1);
   // updating data for chart
   var daysLeftRow = readRowsCount() + 1;
   var daysPlannedRow = readRowsCount() + 2;
-  alert('DaysLeftRow: ' + daysLeftRow);
   modelSheet().getRange(daysLeftRow, 8).setValue('Ideal days left');
   modelSheet().getRange(daysPlannedRow, 8).setValue('Ideal sprint');
   var column = COLUMNS_INITIAL_COUNT + 1;
@@ -291,7 +271,7 @@ function isCellInRange(cell, fromRow, toRow, fromColumn, toColumn) {
 function trimRows(row) {
   scopeSheet().deleteRows(row, scopeSheet().getLastRow() - row + 1);
   var i = 0;
-  while (i < 100) {
+  while (i < 1000) {
     try {
       i++;
       scopeSheet().deleteRows(row, 2);
@@ -461,6 +441,8 @@ function spreadsheet() {
  * Creates a new sheet 'Scope' containing sprint issues and work in progress.
  */
 function generateTemplate() {
+  createVariablesSheet();
+  initVariables();
   userInput();
 }
 
@@ -518,11 +500,8 @@ function drawHeader(startDate, endDate) {
   setHeader(1, currentColumn++, 'Verified', 60);
   setHeader(1, currentColumn++, 'Est.', 40);
   setHeader(1, currentColumn++, ' ', 20);
-//  alert('Drawing headers completed');
-  
   scopeSheet().setFrozenRows(1);
   scopeSheet().setFrozenColumns(4);
-//  alert('Freezing completed');
   
   // extending sheet columns
   var lastColumn = scopeSheet().getLastColumn();
@@ -541,16 +520,10 @@ function drawHeader(startDate, endDate) {
     scopeSheet().appendRow([EMPTY_ROW_MARKER]);
     lastRow = scopeSheet().getLastRow();
   }
-//  alert('Extending rows completed');
-  
   drawBorder(currentColumn - 1, false, true);
-//  alert('Drawing border completed');
-  
   drawWorkingDays(1, currentColumn);
-  alert('Drawing working days completed');
   
   deleteObsoleteColumns();
-//  alert('Deletion obsolete columns completed');
   alert('Drawing template completed');
 }
 
@@ -618,7 +591,6 @@ function deleteObsoleteColumns() {
       // ignore
     }
   }
-  alert('Max Column: ' + scopeSheet().getMaxColumns());
 }
 
 function drawBorder(column, left, right) {
