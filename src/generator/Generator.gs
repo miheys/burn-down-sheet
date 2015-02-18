@@ -34,7 +34,8 @@ function onOpen() {
     {name: 'Generate Template', functionName: 'generateTemplate'},
     {name: 'Process stories', functionName: 'processStories'},
     {name: 'Generate Model', functionName: 'generateModel'},
-    {name: 'Generate Chart', functionName: 'generateChart'}
+    {name: 'Generate Chart', functionName: 'generateChart'},
+    {name: 'Add conditional formatting', functionName: 'addConditionalFormatting'}
   ];
   spreadsheet.addMenu('Scrum', menuItems);
 }
@@ -226,7 +227,6 @@ function processStories() {
   writeRowsCount(row - 2);
   appendTotalEstimate(row - 1);
   appendTotalDevelopers(row);
-  addConditionalFormatting();
   
   alert('Processing stories completed');
 }
@@ -632,3 +632,4 @@ function getDaysCount(startDate, endDate) {
   // get the difference in days (integer value )
   return parseInt(endDay - startDay) + 1;
 }
+
