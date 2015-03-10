@@ -35,7 +35,8 @@ function onOpen() {
     {name: 'Process stories', functionName: 'processStories'},
     {name: 'Generate Model', functionName: 'generateModel'},
     {name: 'Generate Chart', functionName: 'generateChart'},
-    {name: 'Add conditional formatting', functionName: 'addConditionalFormatting'}
+    {name: 'Add conditional formatting', functionName: 'addConditionalFormatting'},
+    {name: 'Add Link to Jiras', functionName: 'addLinkToJira'}
   ];
   spreadsheet.addMenu('Scrum', menuItems);
 }
@@ -631,5 +632,21 @@ function getDaysCount(startDate, endDate) {
   
   // get the difference in days (integer value )
   return parseInt(endDay - startDay) + 1;
+}
+
+/**
+ * Add hyperlink for each cell with Story id
+ */
+function addLinkToJira() {
+  var rowsCount = readRowsCount();
+  var row = 2;
+  while (row < rowsCount) {
+    var cell = scopeSheet().getRange(row, 1);
+    if (!cell.getFormula()) {
+      var linkFormula = '=HYPERLINK("http://jira-oss.lmera.ericsson.se/browse/' + cell.getValue() + '","' + cell.getValue() + '")';
+      cell.setFormula(linkFormula);
+    }
+    row++;
+  }
 }
 
